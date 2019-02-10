@@ -16,10 +16,28 @@ def ma(data, period, col = "Adj Close"):
     data['MA{}'.format(period)] = data[col].rolling(window = period).mean()
     return data
 
-def bb(data, period):
+def bb(data, period = 20, stdmult = 2, col = "Adj Close"):
     '''Function to calculates bollinger bands for timeseries data.
     Takes a Pandas dataframe object with date as index and ticker close data
     and concatenates new columns with the lower band, upper band, and moving avg. '''
+    std = data[col].rolling(window = period).std()
+    data['BB MA{}'.format(period)] = data[col].rolling(window = period).mean()
+    for (mult,band) in [(-1*stdmult, "Lower"), (stdmult, "Upper")]:
+        data['BB {}'.format(band)] = data['BB MA{}'.format(period)] + mult * std
+    return data
+
+def ema(data, period, col = "Adj Close"):
+    '''Function to calculate a moving average for timeseries data.
+    Takes a Pandas dataframe object with date as index and ticker close data
+    and concatenates a new column with the exponential moving average. '''
+    alpha = 2 / (period + 1)
+    data['EMA{}'.format(period)] = data[col].ewm(alpha = alpha).mean()
+    return data
+
+def macd(data, col = "Adj Close"):
+    '''Function to calculate the moving average convergence divergence indicator.
+    Takes a Pandas dataframe object with date as index and ticker close data and 
+    concatenates new columns with EMA12, EMA26, and MACD calculations. '''
     pass
 
 def rsi(data, period):
@@ -30,12 +48,13 @@ def rsi(data, period):
 
 
 if __name__ == "__main__":
-    plt.style.use('ggplot')
-    data = web.DataReader('AAPL','yahoo', start = '2018-01-01', end = '2019-01-01')
-    data = ma(data,20)
+    plt.style.use('seaborn')
+    data = web.DataReader('AAPL','yahoo', start = '2018-02-01', end = '2019-02-01')
+    macd(data)
     print(data.tail())
     data['Adj Close'].plot()
-    data['MA20'].plot()
-    plt.show()
+    data['MACD'].plot()
+    plt.legend()
+    plt.show()   
  
 
