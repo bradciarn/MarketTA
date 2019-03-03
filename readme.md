@@ -10,6 +10,7 @@ This python script contains the functions to calculate technical analysis indica
 The current list of indicators includes:
 * Moving Average 
 * Bollinger Bands
+* Exponential Moving Average
 * MACD
 * Relative Strength Index *In Development*
 
