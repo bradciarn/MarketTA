@@ -9,6 +9,7 @@ Developers:
 This python script contains the functions to calculate technical analysis indicators given a dataset of ticker closes.
 The current list of indicators includes:
 * Moving Average 
-* Bollinger Bands *In Development*
+* Bollinger Bands
+* MACD
 * Relative Strength Index *In Development*
 
