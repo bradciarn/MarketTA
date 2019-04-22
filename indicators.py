@@ -54,17 +54,28 @@ def macd(data, col = "Adj Close"):
     data['MACD Hist'] = data['MACD'] - data['MACD Sig']
     return data
 
-def rsi(data, period):
-    '''Function to calculates the relative strength index for timeseries data.
+def rsi(data, period = 14, col = "Adj Close"):
+    '''Function to calculate the relative strength index for timeseries data.
     Takes a Pandas dataframe object with date as index and ticker close data
     and concatenates a new column with the relative strength. '''
-    pass
-
+    pct_chg = data[col].pct_change()
+    gain = pct_chg.where(pct_chg > 0, 0)
+    loss = pct_chg.where(pct_chg < 0, 0) * -1
+    avgs = pd.DataFrame(columns=['Avg Gain', 'Avg Loss'],index=pct_chg.index)
+    for row in range(period,len(avgs)):
+        if row == period:
+            avgs['Avg Gain'][row] = gain[:period].mean()
+            avgs['Avg Loss'][row] = loss[:period].mean()
+        else:
+            avgs['Avg Gain'][row] = (avgs['Avg Gain'][row-1]*(period-1) + gain[row])/period
+            avgs['Avg Loss'][row] = (avgs['Avg Loss'][row-1]*(period-1) + loss[row])/period
+    RS = avgs['Avg Gain'] / avgs['Avg Loss']
+    data['RSI'] = 100 - (100 / (1 + RS))
+    return data
 
 if __name__ == "__main__":
     plt.style.use('seaborn')
     data = web.DataReader('AAPL','yahoo', start = '2018-02-01', end = '2019-02-01')
-    print(data.tail())
-
- 
-
+    data = rsi(data, 14)
+    data['RSI'].plot()
+    plt.show()
