@@ -54,10 +54,14 @@ def macd(data, col = "Adj Close"):
     data['MACD Hist'] = data['MACD'] - data['MACD Sig']
     return data
 
-def rsi(data, period = 14, col = "Adj Close"):
+def rsi(data, period = 14, col = "Adj Close", **kwarg):
     '''Function to calculate the relative strength index for timeseries data.
     Takes a Pandas dataframe object with date as index and ticker close data
     and concatenates a new column with the relative strength. '''
+    if 'colname' in kwarg:
+        colname = kwarg['colname']
+    else:
+        colname = "RSI{}".format(period)
     pct_chg = data[col].pct_change()
     gain = pct_chg.where(pct_chg > 0, 0)
     loss = pct_chg.where(pct_chg < 0, 0) * -1
@@ -69,13 +73,39 @@ def rsi(data, period = 14, col = "Adj Close"):
         else:
             avgs['Avg Gain'][row] = (avgs['Avg Gain'][row-1]*(period-1) + gain[row])/period
             avgs['Avg Loss'][row] = (avgs['Avg Loss'][row-1]*(period-1) + loss[row])/period
-    RS = avgs['Avg Gain'] / avgs['Avg Loss']
-    data['RSI'] = 100 - (100 / (1 + RS))
+    rs = avgs['Avg Gain'] / avgs['Avg Loss']
+    data[colname] = 100 - (100 / (1 + rs))
     return data
+
+def stoch(data, kperiod = 14, dperiod = 3, col = "Adj Close", **kwarg):
+    '''Function to calculate the stochastic oscillator for timeseries data.
+    Takes a Pandas dataframe object with date as index and ticker close data
+    and concatenates new columns with %K and %D oscillators'''
+    if 'kcolname' in kwarg:
+        kcolname = kwarg['kcolname']
+    else:
+        kcolname = "%K{}".format(kperiod)
+    if 'dcolname' in kwarg:
+        dcolname = kwarg['dcolname']
+    else:
+        dcolname = "%D{}".format(dperiod)
+    set = pd.DataFrame(columns = [], index = data.index)
+    set['max'] = data[col].rolling(window = kperiod).max()
+    set['min'] = data[col].rolling(window = kperiod).min()
+    set[kcolname] = 100 * (data[col] - set['min']) / (set['max'] - set['min'])
+    set = ma(set,dperiod,col=kcolname,colname = dcolname)
+    data = pd.concat([data,set[kcolname],set[dcolname]], axis = 1)
+    return data
+
+def stochrsi(data,kperiod,dperiod,col = "Adj Close", **kwarg):
+    pass
 
 if __name__ == "__main__":
     plt.style.use('seaborn')
     data = web.DataReader('AAPL','yahoo', start = '2018-02-01', end = '2019-02-01')
-    data = rsi(data, 14)
-    data['RSI'].plot()
+    data = stoch(data)
+    data['%K14'].plot()
+    data['%D3'].plot()
     plt.show()
+    print(data.tail(30))
+
